@@ -63,11 +63,12 @@ npm run build
 ## Deploy till Vercel
 
 1. Lägg projektet på GitHub.
-2. Importera projektet i Vercel.
-3. Lägg in samma miljövariabler från `.env.local` i Vercel.
-4. Sätt `NEXT_PUBLIC_APP_URL` till din Vercel-URL.
-5. Deploya.
-6. Öppna `/login` och logga in med `SINGLE_USER_EMAIL` och lösenordet du hashade.
+2. Importera eller länka projektet i Vercel med namnet `private-reselling-os`.
+3. Lägg in miljövariablerna från `.env.example` i Vercel. Lägg inte in `NODE_ENV`; Vercel sätter den själv.
+4. Sätt `NEXT_PUBLIC_SUPABASE_URL` till `https://kauglulcswmdkgipyraw.supabase.co`.
+5. Sätt `NEXT_PUBLIC_APP_URL` till din Vercel-URL.
+6. Deploya.
+7. Öppna `/login` och logga in med `SINGLE_USER_EMAIL` och lösenordet du hashade.
 
 ## Installera som iPhone-app
 
