@@ -70,6 +70,14 @@ npm run build
 6. Deploya.
 7. Öppna `/login` och logga in med `SINGLE_USER_EMAIL` och lösenordet du hashade.
 
+För att lägga in hemligheterna utan att skriva dem i terminalhistoriken kan du köra:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup-vercel-secrets.ps1
+```
+
+Scriptet frågar efter Supabase service role key, login-email och lösenord, skapar lösenordshashen och sparar värdena som Vercel secrets.
+
 ## Installera som iPhone-app
 
 Öppna appen i Safari, tryck Dela och välj Lägg till på hemskärmen.
