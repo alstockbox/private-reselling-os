@@ -1,0 +1,38 @@
+{
+  "name": "stockbox-2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src/app src/components/app src/components/forms src/components/ui/button.tsx src/lib/auth src/lib/env src/lib/finance src/lib/reseller src/lib/supabase/admin.ts tests/reseller",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "hash-password": "node scripts/hash-password.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.4",
+    "@supabase/supabase-js": "2.112.3",
+    "clsx": "2.1.1",
+    "lucide-react": "1.33.0",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "recharts": "3.10.1",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}
