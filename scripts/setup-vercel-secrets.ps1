@@ -22,12 +22,25 @@ function ConvertTo-Base64Url {
   return [Convert]::ToBase64String($Bytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
 }
 
+function New-RandomBytes {
+  param([int]$Length)
+
+  $bytes = New-Object byte[] $Length
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  try {
+    $rng.GetBytes($bytes)
+    return $bytes
+  }
+  finally {
+    $rng.Dispose()
+  }
+}
+
 function New-PasswordHash {
   param([string]$Password)
 
   $iterations = 310000
-  $saltBytes = [byte[]]::new(16)
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($saltBytes)
+  $saltBytes = New-RandomBytes 16
 
   $derive = [System.Security.Cryptography.Rfc2898DeriveBytes]::new(
     $Password,
