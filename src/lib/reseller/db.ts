@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { acquisitionCost, calculateSale } from "@/lib/finance/engine";
 import { toOre } from "@/lib/finance/money";
 import type { AppSettings, InventoryItem, LedgerTransaction, SaleRecord } from "./types";
 
@@ -131,25 +130,12 @@ export async function completeOnboarding(formData: FormData) {
   const reservePercentage = Number(formData.get("reservePercentage") ?? 20);
   if (reinvestmentPercentage + reservePercentage !== 100) throw new Error("Fördelningen måste bli 100%.");
 
-  const { error } = await supabase
-    .from("app_settings")
-    .upsert({
-      id: "owner",
-      starting_capital_ore: startingCapitalOre,
-      reinvestment_percentage: reinvestmentPercentage,
-      reserve_percentage: reservePercentage,
-      onboarding_completed: true
-    });
-  if (error) throw error;
-
-  const { error: ledgerError } = await supabase.from("ledger_transactions").insert({
-    type: "INITIAL_CAPITAL",
-    envelope: "reinvestment",
-    amount_ore: startingCapitalOre,
-    occurred_on: new Date().toISOString().slice(0, 10),
-    note: "Startkapital"
+  const { error } = await supabase.rpc("complete_onboarding_tx", {
+    p_starting_capital_ore: startingCapitalOre,
+    p_reinvestment_percentage: reinvestmentPercentage,
+    p_reserve_percentage: reservePercentage
   });
-  if (ledgerError) throw ledgerError;
+  if (error) throw error;
   revalidatePath("/app");
   redirect("/app");
 }
@@ -162,169 +148,57 @@ export async function createItem(formData: FormData) {
   const inboundShippingOre = toOre(formData.get("inboundShipping"));
   const acquisitionFeeOre = toOre(formData.get("acquisitionFee"));
   const otherAcquisitionCostOre = toOre(formData.get("otherAcquisitionCost"));
-  const total = acquisitionCost({
-    purchasePriceOre,
-    inboundShippingOre,
-    acquisitionFeeOre,
-    otherAcquisitionCostOre
-  });
   const title = String(formData.get("title") ?? "").trim();
   if (!title) throw new Error("Titel saknas.");
+  const askingPriceText = String(formData.get("askingPrice") ?? "").trim();
 
-  const { data: item, error } = await supabase
-    .from("inventory_items")
-    .insert({
-      title,
-      description: nullableText(formData.get("description")),
-      image_url: nullableText(formData.get("imageUrl")),
-      category: nullableText(formData.get("category")),
-      brand: nullableText(formData.get("brand")),
-      size: nullableText(formData.get("size")),
-      condition: nullableText(formData.get("condition")),
-      color: nullableText(formData.get("color")),
-      purchase_price_ore: purchasePriceOre,
-      inbound_shipping_ore: inboundShippingOre,
-      acquisition_fee_ore: acquisitionFeeOre,
-      other_acquisition_cost_ore: otherAcquisitionCostOre,
-      acquisition_cost_ore: total,
-      purchase_date: String(formData.get("purchaseDate") || new Date().toISOString().slice(0, 10)),
-      source_platform: nullableText(formData.get("sourcePlatform")),
-      source_url: nullableUrl(formData.get("sourceUrl")),
-      source_notes: nullableText(formData.get("sourceNotes")),
-      listing_platform: nullableText(formData.get("listingPlatform")),
-      listing_url: nullableUrl(formData.get("listingUrl")),
-      asking_price_ore: formData.get("askingPrice") ? toOre(formData.get("askingPrice")) : null,
-      listing_date: nullableText(formData.get("listingDate")),
-      listing_notes: nullableText(formData.get("listingNotes")),
-      status: formData.get("askingPrice") ? "ACTIVE" : "DRAFT"
-    })
-    .select()
-    .single();
-  if (error) throw error;
-
-  const { error: ledgerError } = await supabase.from("ledger_transactions").insert({
-    type: "PURCHASE",
-    envelope: "reinvestment",
-    amount_ore: -total,
-    item_id: item.id,
-    occurred_on: item.purchase_date,
-    note: `Inköp: ${title}`
+  const { data: itemId, error } = await supabase.rpc("create_item_with_purchase_tx", {
+    p_title: title,
+    p_description: nullableText(formData.get("description")),
+    p_image_url: nullableText(formData.get("imageUrl")),
+    p_category: nullableText(formData.get("category")),
+    p_brand: nullableText(formData.get("brand")),
+    p_size: nullableText(formData.get("size")),
+    p_condition: nullableText(formData.get("condition")),
+    p_color: nullableText(formData.get("color")),
+    p_purchase_price_ore: purchasePriceOre,
+    p_inbound_shipping_ore: inboundShippingOre,
+    p_acquisition_fee_ore: acquisitionFeeOre,
+    p_other_acquisition_cost_ore: otherAcquisitionCostOre,
+    p_purchase_date: String(formData.get("purchaseDate") || new Date().toISOString().slice(0, 10)),
+    p_source_platform: nullableText(formData.get("sourcePlatform")),
+    p_source_url: nullableUrl(formData.get("sourceUrl")),
+    p_source_notes: nullableText(formData.get("sourceNotes")),
+    p_listing_platform: nullableText(formData.get("listingPlatform")),
+    p_listing_url: nullableUrl(formData.get("listingUrl")),
+    p_asking_price_ore: askingPriceText ? toOre(askingPriceText) : null,
+    p_listing_date: nullableText(formData.get("listingDate")),
+    p_listing_notes: nullableText(formData.get("listingNotes")),
+    p_status: askingPriceText ? "ACTIVE" : "DRAFT"
   });
-  if (ledgerError) throw ledgerError;
+  if (error) throw error;
   revalidatePath("/app");
-  redirect(`/app/inventory/${item.id}`);
+  redirect(`/app/inventory/${itemId}`);
 }
 
 export async function markSold(itemId: string, formData: FormData) {
   "use server";
   await import("@/lib/auth/session").then((mod) => mod.requireOwner());
-  const settings = await requireSettings();
   const supabase = supabaseOrThrow();
-  const { item } = await getItem(itemId);
-  if (item.status === "SOLD") throw new Error("Plagget är redan markerat som sålt.");
-  const calc = calculateSale(
-    {
-      purchasePriceOre: item.purchase_price_ore,
-      inboundShippingOre: item.inbound_shipping_ore,
-      acquisitionFeeOre: item.acquisition_fee_ore,
-      otherAcquisitionCostOre: item.other_acquisition_cost_ore
-    },
-    {
-      salePriceOre: toOre(formData.get("salePrice")),
-      sellerFeeOre: toOre(formData.get("sellerFee")),
-      sellerPaidShippingOre: toOre(formData.get("sellerPaidShipping")),
-      directSaleCostOre: toOre(formData.get("directSaleCost")),
-      refundAmountOre: toOre(formData.get("refundAmount"))
-    },
-    {
-      reinvestmentPercentage: settings.reinvestment_percentage,
-      reservePercentage: settings.reserve_percentage
-    }
-  );
   const saleDate = String(formData.get("saleDate") || new Date().toISOString().slice(0, 10));
-  const platform = nullableText(formData.get("sellingPlatform")) ?? item.listing_platform;
-
-  const { error: saleError } = await supabase.from("sale_records").insert({
-    item_id: item.id,
-    sale_price_ore: toOre(formData.get("salePrice")),
-    seller_fee_ore: toOre(formData.get("sellerFee")),
-    seller_paid_shipping_ore: toOre(formData.get("sellerPaidShipping")),
-    direct_sale_cost_ore: toOre(formData.get("directSaleCost")),
-    refund_amount_ore: toOre(formData.get("refundAmount")),
-    sale_date: saleDate,
-    selling_platform: platform,
-    net_sale_proceeds_ore: calc.netSaleProceedsOre,
-    realized_profit_ore: calc.realizedProfitOre,
-    profit_margin_bps: calc.profitMarginPercent === null ? null : Math.round(calc.profitMarginPercent * 100),
-    roi_bps: calc.roiPercent === null ? null : Math.round(calc.roiPercent * 100),
-    reinvestment_allocation_ore: calc.reinvestmentProfitOre,
-    reserve_allocation_ore: calc.reserveProfitOre
+  const { error } = await supabase.rpc("mark_item_sold_tx", {
+    p_item_id: itemId,
+    p_sale_price_ore: toOre(formData.get("salePrice")),
+    p_seller_fee_ore: toOre(formData.get("sellerFee")),
+    p_seller_paid_shipping_ore: toOre(formData.get("sellerPaidShipping")),
+    p_direct_sale_cost_ore: toOre(formData.get("directSaleCost")),
+    p_refund_amount_ore: toOre(formData.get("refundAmount")),
+    p_sale_date: saleDate,
+    p_selling_platform: nullableText(formData.get("sellingPlatform"))
   });
-  if (saleError) throw saleError;
-
-  const entries: {
-    type: string;
-    envelope: string;
-    amount_ore: number;
-    item_id: string;
-    occurred_on: string;
-    note: string;
-    metadata: Record<string, unknown>;
-  }[] = [];
-
-  if (calc.realizedProfitOre > 0) {
-    entries.push({
-      type: "SALE_RETURN_CAPITAL",
-      envelope: "reinvestment",
-      amount_ore: calc.returnedCapitalOre,
-      item_id: item.id,
-      occurred_on: saleDate,
-      note: `Kapital tillbaka: ${item.title}`,
-      metadata: calc as unknown as Record<string, unknown>
-    });
-    if (calc.reinvestmentProfitOre > 0) {
-      entries.push({
-        type: "SALE_REINVESTMENT_PROFIT",
-        envelope: "reinvestment",
-        amount_ore: calc.reinvestmentProfitOre,
-        item_id: item.id,
-        occurred_on: saleDate,
-        note: `Återinvesterad vinst: ${item.title}`,
-        metadata: calc as unknown as Record<string, unknown>
-      });
-    }
-  } else {
-    entries.push({
-      type: "SALE_RETURN_CAPITAL",
-      envelope: "reinvestment",
-      amount_ore: calc.reinvestmentCashFromSaleOre,
-      item_id: item.id,
-      occurred_on: saleDate,
-      note: `Såld: ${item.title}`,
-      metadata: calc as unknown as Record<string, unknown>
-    });
-  }
-  if (calc.reserveCashFromSaleOre > 0) {
-    entries.push({
-      type: "SALE_RESERVE_PROFIT",
-      envelope: "reserve",
-      amount_ore: calc.reserveCashFromSaleOre,
-      item_id: item.id,
-      occurred_on: saleDate,
-      note: `Buffert från ${item.title}`,
-      metadata: calc as unknown as Record<string, unknown>
-    });
-  }
-  const { error: ledgerError } = await supabase.from("ledger_transactions").insert(entries);
-  if (ledgerError) throw ledgerError;
-
-  const { error: updateError } = await supabase
-    .from("inventory_items")
-    .update({ status: "SOLD", listing_platform: platform })
-    .eq("id", item.id);
-  if (updateError) throw updateError;
+  if (error) throw error;
   revalidatePath("/app");
-  redirect(`/app/inventory/${item.id}?sold=1`);
+  redirect(`/app/inventory/${itemId}?sold=1`);
 }
 
 export async function manualTransaction(formData: FormData) {
