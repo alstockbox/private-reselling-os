@@ -86,7 +86,25 @@ alter table inventory_items enable row level security;
 alter table sale_records enable row level security;
 alter table ledger_transactions enable row level security;
 
-create policy "service role only settings" on app_settings for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
-create policy "service role only items" on inventory_items for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
-create policy "service role only sales" on sale_records for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
-create policy "service role only ledger" on ledger_transactions for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
+revoke all on app_settings from anon, authenticated;
+revoke all on inventory_items from anon, authenticated;
+revoke all on sale_records from anon, authenticated;
+revoke all on ledger_transactions from anon, authenticated;
+
+grant select, insert, update, delete on app_settings to service_role;
+grant select, insert, update, delete on inventory_items to service_role;
+grant select, insert, update, delete on sale_records to service_role;
+grant select, insert, update, delete on ledger_transactions to service_role;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'item-images',
+  'item-images',
+  true,
+  8388608,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;

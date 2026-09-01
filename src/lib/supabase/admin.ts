@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { assertConfigured, getServerEnv, isSupabaseConfigured } from "@/lib/env/server";
+import { assertConfigured, isSupabaseConfigured } from "@/lib/env/server";
 
 export function createAdminClient() {
   if (!isSupabaseConfigured()) return null;

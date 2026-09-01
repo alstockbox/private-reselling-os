@@ -131,7 +131,7 @@ export async function completeOnboarding(formData: FormData) {
   const reservePercentage = Number(formData.get("reservePercentage") ?? 20);
   if (reinvestmentPercentage + reservePercentage !== 100) throw new Error("Fördelningen måste bli 100%.");
 
-  const { data: settings, error } = await supabase
+  const { error } = await supabase
     .from("app_settings")
     .upsert({
       id: "owner",
@@ -139,9 +139,7 @@ export async function completeOnboarding(formData: FormData) {
       reinvestment_percentage: reinvestmentPercentage,
       reserve_percentage: reservePercentage,
       onboarding_completed: true
-    })
-    .select()
-    .single();
+    });
   if (error) throw error;
 
   const { error: ledgerError } = await supabase.from("ledger_transactions").insert({

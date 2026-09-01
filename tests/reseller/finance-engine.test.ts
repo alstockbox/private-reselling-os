@@ -25,7 +25,7 @@ describe("reseller finance engine", () => {
     const sale = calculateSale({ purchasePriceOre: 29900 }, { salePriceOre: 60000 }, split);
 
     expect(sale.realizedProfitOre).toBe(30100);
-    expect(sale.profitMarginPercent).toBeCloseTo(50.166, 3);
+    expect(sale.profitMarginPercent).toBeCloseTo(50.1667, 3);
     expect(sale.roiPercent).toBeCloseTo(100.669, 3);
   });
 
