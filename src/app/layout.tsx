@@ -9,12 +9,12 @@ const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-displa
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
-    default: "StockBox Resale",
-    template: "%s | StockBox Resale"
+    default: "Private Reselling OS",
+    template: "%s | Private Reselling OS"
   },
   description: "Privat ekonomi- och lagerapp för klädreselling.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "StockBox" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Resell OS" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" }
 };
 

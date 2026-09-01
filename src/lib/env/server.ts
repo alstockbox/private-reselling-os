@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  NEXT_PUBLIC_SITE_NAME: z.string().default("StockBox Resale"),
+  NEXT_PUBLIC_SITE_NAME: z.string().default("Private Reselling OS"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional().or(z.literal("")),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional().or(z.literal("")),
   SUPABASE_STORAGE_BUCKET: z.string().default("item-images"),

@@ -21,7 +21,7 @@ export async function GET() {
     },
     {
       headers: {
-        "Content-Disposition": `attachment; filename="stockbox-export-${new Date().toISOString().slice(0, 10)}.json"`
+        "Content-Disposition": `attachment; filename="private-reselling-os-export-${new Date().toISOString().slice(0, 10)}.json"`
       }
     }
   );

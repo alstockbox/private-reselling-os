@@ -1,1 +1,1 @@
-export const SESSION_COOKIE = "stockbox_owner_session";
+export const SESSION_COOKIE = "private_reselling_os_session";

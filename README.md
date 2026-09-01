@@ -1,6 +1,6 @@
-# StockBox Resale
+# Private Reselling OS
 
-StockBox Resale är en privat, mobilförst app för att driva en liten klädreselling-verksamhet utan kalkylark. Den hanterar inköp, lager, försäljningar, bilduppladdning, buffert, återinvestering, transaktionshistorik och ekonomiöversikt på svenska.
+Private Reselling OS är en privat, mobilförst app för att driva en liten klädreselling-verksamhet utan kalkylark. Den hanterar inköp, lager, försäljningar, bilduppladdning, buffert, återinvestering, transaktionshistorik och ekonomiöversikt på svenska.
 
 ## Teknik
 

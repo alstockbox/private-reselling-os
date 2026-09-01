@@ -1,6 +1,6 @@
 {
-  "name": "StockBox Resale",
-  "short_name": "StockBox",
+  "name": "Private Reselling OS",
+  "short_name": "Resell OS",
   "description": "Privat lager och ekonomi för klädreselling.",
   "start_url": "/app",
   "scope": "/",
