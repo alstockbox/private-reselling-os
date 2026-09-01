@@ -16,8 +16,8 @@ StockBox Resale är en privat, mobilförst app för att driva en liten klädrese
 1. Kör `npm install`.
 2. Kopiera `.env.example` till `.env.local`.
 3. Skapa ett Supabase-projekt.
-4. Kör SQL-filen `supabase/migrations/202609010001_reseller_os.sql` i Supabase SQL Editor.
-5. Skapa en publik Storage bucket med namnet `item-images`.
+4. Kör migrationsfilerna i `supabase/migrations` i datumordning, eller använd Supabase CLI.
+5. Migrationen skapar en publik Storage bucket med namnet `item-images`.
 6. Fyll i `NEXT_PUBLIC_SUPABASE_URL` och `SUPABASE_SERVICE_ROLE_KEY`.
 7. Kör `npm run hash-password` och klistra in resultatet som `SINGLE_USER_PASSWORD_HASH`.
 8. Sätt `SINGLE_USER_EMAIL` till din inloggningsadress.
@@ -44,7 +44,7 @@ Databasen består av:
 - `sale_records`: försäljning, avgifter, vinst, marginal, ROI och fördelning.
 - `ledger_transactions`: append-only transaktioner för återinvestering och buffert.
 
-Storage används endast för bilder. Bildens URL sparas i databasen, aldrig base64.
+Storage används endast för bilder. Bildens URL sparas i databasen, aldrig base64. Bucketen `item-images` skapas av migrationen.
 
 ## Ekonomimodell
 
